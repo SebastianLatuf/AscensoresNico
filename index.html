@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ASC NICO</title>
+  <meta name="theme-color" content="#0F172A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="https://i.ibb.co/0wQBDR6/logo-asc.png">
+  <link rel="icon" type="image/png" href="https://i.ibb.co/0wQBDR6/logo-asc.png">
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0F172A; }
+    iframe { border: none; display: block; transform-origin: top left; }
+  </style>
+</head>
+<body>
+
+  <iframe id="gas-frame" allow="geolocation; microphone; camera; clipboard-read; clipboard-write"></iframe>
+
+  <script>
+    // 1. PEGÁ ACÁ TU LINK DE GOOGLE APPS SCRIPT (el que termina en /exec)
+    const URL_BASE_GAS = "https://script.google.com/macros/s/AKfycbx252K-bsEfYImaKGxaosvVFU-jj-zwD7vuYsbDZotFOUywA1J0tzUzJGBr3zTumQ4/exec";
+    const iframe = document.getElementById('gas-frame');
+
+    // 2. Ajuste automático de proporción para celulares y ventanas chicas
+    function ajustarEscalaMovil() {
+      const anchoPantalla = window.innerWidth;
+      const altoPantalla = window.innerHeight;
+      const ANCHO_BASE_MOVIL = 980; // El ancho exacto para el que fue diseñado tu CSS móvil
+
+      if (anchoPantalla <= 990) {
+        const escala = anchoPantalla / ANCHO_BASE_MOVIL;
+        iframe.style.width = ANCHO_BASE_MOVIL + 'px';
+        iframe.style.height = Math.ceil(altoPantalla / escala) + 'px';
+        iframe.style.transform = `scale(${escala})`;
+      } else {
+        // En PC se ve al 100% normal
+        iframe.style.width = '100%';
+        iframe.style.height = '100vh';
+        iframe.style.transform = 'none';
+      }
+    }
+
+    window.addEventListener('resize', ajustarEscalaMovil);
+    window.addEventListener('orientationchange', ajustarEscalaMovil);
+    ajustarEscalaMovil();
+
+    // 3. Manejo de sesión guardada
+    const sesionGuardada = localStorage.getItem('ascensores_nico_url');
+    iframe.src = sesionGuardada ? sesionGuardada : URL_BASE_GAS;
+
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'CAMBIAR_URL') {
+        if (event.data.logout) {
+          localStorage.removeItem('ascensores_nico_url');
+          iframe.src = URL_BASE_GAS;
+        } else {
+          localStorage.setItem('ascensores_nico_url', event.data.url);
+          iframe.src = event.data.url;
+        }
+      }
+    });
+
+    // 4. Registro del Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>
